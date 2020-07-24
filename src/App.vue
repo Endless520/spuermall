@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <router-view/>
+    <keep-alive exclude="Detail">
+      <router-view/>
+    </keep-alive>
     <mian-tabbar :tabbar="tabbar"></mian-tabbar>
   </div>
 </template>
