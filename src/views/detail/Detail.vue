@@ -1,12 +1,14 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav-bar"></detail-nav-bar>
-    <scroll class="detail-scroll" ref="scroll">
+    <detail-nav-bar class="detail-nav-bar" @changeType="changeType" :tab-index="tabIndex"></detail-nav-bar>
+    <scroll class="detail-scroll" ref="scroll" :probe-type="3" @scroll="scroll">
       <detail-swiper :top-images="topImages"></detail-swiper>
       <detail-base-info :goods="goods"></detail-base-info>
       <detail-shop-info :shop="shop"></detail-shop-info>
-      <detail-goods-info :detail-info="detailInfo" @imageLoad="refresh"></detail-goods-info>
-      <detail-param-info :param-info="goodsParam"></detail-param-info>
+      <detail-goods-info :detail-info="detailInfo" @imageLoad="scrolRefresh"></detail-goods-info>
+      <detail-param-info ref="param" :param-info="goodsParam"></detail-param-info>
+      <detail-comment-info ref="comment" :comment-info="commentInfo"></detail-comment-info>
+      <detail-recommend-info ref="recommend" :recommend-list="recommend"></detail-recommend-info>
     </scroll>
   </div>
 </template>
@@ -20,8 +22,11 @@
   import DetailShopInfo from "./childComs/DetailShopInfo";
   import DetailGoodsInfo from "./childComs/DetailGoodsInfo";
   import DetailParamInfo from "./childComs/DetailParamInfo";
+  import DetailCommentInfo from "./childComs/DetailCommentInfo";
+  import DetailRecommendInfo from "./childComs/DetailRecommendInfo";
 
   import * as ajax from "../../network/detail";
+  import utils from "../../common/utils";
 
   export default {
     name: "Detail",
@@ -32,12 +37,36 @@
         goods: {},
         shop: {},
         goodsParam: {},
-        detailInfo: {}
+        detailInfo: {},
+        commentInfo: {},
+        recommend: [],
+        offsetTop: {
+          good: 0,
+          param: 0,
+          comment: 0,
+          recommend: 0
+        },
+        tabIndex: 0
       }
     },
     methods: {
-      refresh() {
+      scrolRefresh() {
         this.$refs.scroll.refresh()
+      },
+      scroll(position) {
+        if (-position.y > this.offsetTop.recommend){
+          this.tabIndex = 3
+        }else if (-position.y > this.offsetTop.comment) {
+          this.tabIndex = 2
+        }else if (-position.y > this.offsetTop.param) {
+          this.tabIndex = 1
+        }else {
+          this.tabIndex = 0
+        }
+      },
+      changeType(type,index) {
+        this.$refs.scroll.scrollTo(0,-this.offsetTop[type],0)
+        this.tabIndex = index
       }
     },
     created() {
@@ -50,7 +79,26 @@
         this.shop = new ajax.Shop(data.shopInfo)
         this.detailInfo = data.detailInfo;
         this.goodsParam = new ajax.GoodsParam(data.itemParams.info, data.itemParams.rule)
+        if (data.rate.cRate !== 0 ){
+          this.commentInfo = data.rate.list[0]
+        }
       })
+
+      ajax.getRecommend().then(res => {
+        this.recommend = res.data.list
+      })
+    },
+    mounted() {
+      this.refresh = utils.debounce(this.$refs.scroll.refresh,200)
+      this.$EventBus.$on('detailItemImgLoad', () => {
+        this.refresh()
+      })
+      //应该监听图片加载完成，这里使用异步等待0.8秒
+      setTimeout(() => {
+        this.offsetTop.param = this.$refs.param.$el.offsetTop
+        this.offsetTop.comment = this.$refs.comment.$el.offsetTop
+        this.offsetTop.recommend = this.$refs.recommend.$el.offsetTop
+      },800)
     },
     components: {
       Scroll,
@@ -59,7 +107,9 @@
       DetailBaseInfo,
       DetailShopInfo,
       DetailGoodsInfo,
-      DetailParamInfo
+      DetailParamInfo,
+      DetailCommentInfo,
+      DetailRecommendInfo
     }
   }
 </script>

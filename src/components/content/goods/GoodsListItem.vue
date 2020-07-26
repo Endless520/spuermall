@@ -1,6 +1,6 @@
 <template>
   <div class="goods-item" @click="itemClick">
-    <img :src="item.show.img" alt="" @load="imgLoad">
+    <img :src="showImg" alt="" @load="imgLoad">
     <div class="good-detail">
       <p class="good-desc">{{item.title}}</p>
       <span class="price">￥:{{item.price}}</span>
@@ -18,9 +18,19 @@
         required: true
       }
     },
+    computed: {
+      showImg() {
+        return this.item.show ? this.item.show.img : this.item.image
+        // return   this.item.image || this.item.show.img
+      }
+    },
     methods: {
       imgLoad() {
-        this.$EventBus.$emit('itemImgLoad')
+        if (this.$route.path.indexOf('/home') !== -1){
+          this.$EventBus.$emit('itemImgLoad')
+        }else if (this.$route.path.indexOf('/detail') !== -1){
+          this.$EventBus.$emit('detailItemImgLoad')
+        }
       },
       itemClick() {
         this.$router.push('/detail/'+this.item.iid)

@@ -21,20 +21,25 @@
   import TabControl from "../../../components/content/tabControl/TabControl";
   export default {
     name: "DetailNavBar",
+    props: {
+      tabIndex: {
+        type: Number,
+        default: 0
+      }
+    },
     data() {
       return {
         tabs: [
-          {title: '商品', type: ''},
-          {title: '参数', type: ''},
-          {title: '评论', type: ''},
-          {title: '推荐', type: ''}
-        ],
-        tabIndex: 0
+          {title: '商品', type: 'good'},
+          {title: '参数', type: 'param'},
+          {title: '评论', type: 'comment'},
+          {title: '推荐', type: 'recommend'}
+        ]
       }
     },
     methods: {
       changeType(index) {
-        this.tabIndex = index
+        this.$emit('changeType',this.tabs[index].type,index)
       },
       backClick() {
         this.$router.back()
